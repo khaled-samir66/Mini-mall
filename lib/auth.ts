@@ -1,4 +1,5 @@
 import crypto from "crypto"
+import { cookies } from "next/headers"
 
 export const sessionCookie = "admin_session"
 
@@ -64,4 +65,13 @@ export function verifySession(token?: string | null) {
   } catch {
     return null
   }
+}
+
+export async function getAdminEmail() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get(sessionCookie)?.value
+
+  const session = verifySession(token)
+
+  return session?.email ?? null
 }

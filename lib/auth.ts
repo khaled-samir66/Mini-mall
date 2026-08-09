@@ -1,67 +1,67 @@
-import { createHmac, timingSafeEqual } from "node:crypto"
-import { cookies } from "next/headers"
+import crypto from "crypto"
 
-const COOKIE = "olad_harb_admin"
-const TTL = 60 * 60 * 24 * 7
+export const sessionCookie = "admin_session"
 
-function secret() {
-  return process.env.SESSION_SECRET || "change-this-secret-before-production"
-}
+function getSecret() {
+  const secret = process.env.SESSION_SECRET
 
-function sign(value: string) {
-  return createHmac("sha256", secret()).update(value).digest("hex")
-}
+  if (!secret) {
+    throw new Error("SESSION_SECRET is missing")
+  }
 
-function tokenFor(email: string, expires: number) {
-  const value = `${email}|${expires}`
-  return `${Buffer.from(value).toString("base64url")}.${sign(value)}`
+  return secret
 }
 
 export function makeSession(email: string) {
-  return tokenFor(email, Math.floor(Date.now() / 1000) + TTL)
+  const payload = Buffer.from(
+    JSON.stringify({
+      email,
+      exp: Date.now() + 1000 * 60 * 60 * 24 * 7,
+    })
+  ).toString("base64url")
+
+  const signature = crypto
+    .createHmac("sha256", getSecret())
+    .update(payload)
+    .digest("base64url")
+
+  return `${payload}.${signature}`
 }
 
-export function verifySession(token?: string) {
+export function verifySession(token?: string | null) {
   if (!token) return null
-  const [encoded, signature] = token.split(".")
-  if (!encoded || !signature) return null
+
   try {
-    const value = Buffer.from(encoded, "base64url").toString("utf8")
-    const expected = sign(value)
-    if (signature.length !== expected.length || !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null
-    const [email, expiresText] = value.split("|")
-    if (!email || Number(expiresText) < Math.floor(Date.now() / 1000)) return null
-    return email
+    const [payload, signature] = token.split(".")
+
+    if (!payload || !signature) return null
+
+    const expected = crypto
+      .createHmac("sha256", getSecret())
+      .update(payload)
+      .digest("base64url")
+
+    if (
+      !crypto.timingSafeEqual(
+        Buffer.from(signature),
+        Buffer.from(expected)
+      )
+    ) {
+      return null
+    }
+
+    const data = JSON.parse(
+      Buffer.from(payload, "base64url").toString("utf8")
+    )
+
+    if (!data.email || !data.exp) return null
+
+    if (Date.now() > data.exp) return null
+
+    return {
+      email: String(data.email),
+    }
   } catch {
     return null
-  }
-}
-
-export async function getAdminEmail() {
-  const store = await cookies()
-  return verifySession(store.get(COOKIE)?.value)
-}
-
-
-
-export function clearSessionCookie() {
-  return {
-    name: COOKIE,
-    value: "",
-    httpOnly: true,
-    sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-  }
-}
-export function sessionCookie(value: string) {
-  return {
-    name: COOKIE,
-    value,
-    httpOnly: true,
-    sameSite: "lax" as const,
-    secure: true,
-    path: "/",
-    maxAge: TTL,
   }
 }

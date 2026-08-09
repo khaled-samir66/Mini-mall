@@ -43,9 +43,24 @@ export async function getAdminEmail() {
 }
 
 export function sessionCookie(value: string) {
-  return { name: COOKIE, value, httpOnly: true, sameSite: "lax" as const, secure: process.env.NODE_ENV === "production", path: "/", maxAge: TTL }
+  return {
+    name: COOKIE,
+    value,
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+  }
 }
 
+
 export function clearSessionCookie() {
-  return { name: COOKIE, value: "", httpOnly: true, sameSite: "lax" as const, secure: process.env.NODE_ENV === "production", path: "/", maxAge: 0 }
+  return {
+    name: COOKIE,
+    value: "",
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+  }
 }

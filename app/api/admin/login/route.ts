@@ -3,10 +3,13 @@ import { makeSession, sessionCookie } from "@/lib/auth"
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json()
+    const body = await request.json()
 
-    const adminEmail = process.env.ADMIN_EMAIL
-    const adminPassword = process.env.ADMIN_PASSWORD
+    const email = String(body.email || "").trim()
+    const password = String(body.password || "")
+
+    const adminEmail = String(process.env.ADMIN_EMAIL || "").trim()
+    const adminPassword = String(process.env.ADMIN_PASSWORD || "")
 
     if (!adminEmail || !adminPassword) {
       return NextResponse.json(
@@ -15,12 +18,9 @@ export async function POST(request: Request) {
       )
     }
 
-    if (
-      String(email).trim() !== String(adminEmail).trim() ||
-      String(password) !== String(adminPassword)
-    ) {
+    if (email !== adminEmail || password !== adminPassword) {
       return NextResponse.json(
-        { error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" },
+        { error: "البريد أو كلمة المرور غير صحيحة" },
         { status: 401 }
       )
     }
@@ -29,16 +29,21 @@ export async function POST(request: Request) {
 
     const response = NextResponse.json({
       ok: true,
-      authenticated: true,
     })
 
-    response.cookies.set(
-      sessionCookie(token)
-    )
+    response.cookies.set({
+      name: sessionCookie,
+      value: token,
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    })
 
     return response
   } catch (error) {
-    console.error("Admin login error:", error)
+    console.error("LOGIN_ERROR", error)
 
     return NextResponse.json(
       { error: "حدث خطأ أثناء تسجيل الدخول" },

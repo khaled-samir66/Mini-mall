@@ -1,19 +1,34 @@
 import { NextResponse } from "next/server"
-import bcrypt from "bcryptjs"
-import { db } from "@/lib/db"
 import { makeSession, sessionCookie } from "@/lib/auth"
-
-export const runtime = "nodejs"
 
 export async function POST(request: Request) {
   const { email, password } = await request.json()
-  if (!email || !password) return NextResponse.json({ error: "أدخل البريد وكلمة المرور" }, { status: 400 })
-  const [rows]: any = await db.execute("SELECT email, password_hash FROM admins WHERE email=? LIMIT 1", [String(email).trim().toLowerCase()])
-  const admin = rows[0]
-  if (!admin || !(await bcrypt.compare(String(password), admin.password_hash))) {
-    return NextResponse.json({ error: "بيانات الدخول غير صحيحة" }, { status: 401 })
+
+  const adminEmail = process.env.ADMIN_EMAIL
+  const adminPassword = process.env.ADMIN_PASSWORD
+
+  if (!adminEmail || !adminPassword) {
+    return NextResponse.json(
+      { error: "إعدادات المدير غير موجودة" },
+      { status: 500 }
+    )
   }
+
+  if (String(email).trim() !== adminEmail || String(password) !== adminPassword) {
+    return NextResponse.json(
+      { error: "البريد أو كلمة المرور غير صحيحة" },
+      { status: 401 }
+    )
+  }
+
   const response = NextResponse.json({ ok: true })
-  response.cookies.set(sessionCookie(admin.email))
+
+  response.cookies.set(sessionCookie, makeSession(adminEmail), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: true,
+    path: "/",
+  })
+
   return response
 }

@@ -29,7 +29,7 @@ export default function AdminPage() {
     const r = await fetch("/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: loginEmail, password }) })
     const data = await r.json(); setBusy(false)
     if (!r.ok) return setNotice(data.error || "تعذر تسجيل الدخول")
-    setPassword(""); await load()
+    s await load()
   }
 
   async function save(e: FormEvent) {
@@ -44,7 +44,7 @@ export default function AdminPage() {
   async function remove(id: string) {
     if (!confirm("هل تريد حذف هذا المنتج؟")) return
     await fetch("/api/products", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) })
-    await load()
+    ()await load
   }
 
   async function clearAll() {

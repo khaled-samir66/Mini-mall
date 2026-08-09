@@ -25,11 +25,28 @@ export default function AdminPage() {
   useEffect(() => { load() }, [])
 
   async function login(e: FormEvent) {
-    e.preventDefault(); setBusy(true); setNotice("")
-    const r = await fetch("/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: loginEmail, password }) })
-    const data = await r.json(); setBusy(false)
-    if (!r.ok) return setNotice(data.error || "تعذر تسجيل الدخول")
-      ()await load
+  e.preventDefault()
+  setBusy(true)
+  setNotice("")
+
+  const r = await fetch("/api/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: loginEmail,
+      password: password,
+    }),
+  })
+
+  const data = await r.json()
+  setBusy(false)
+
+  if (!r.ok) {
+    setNotice(data.error || "تعذر تسجيل الدخول")
+    return
+  }
+
+  await load()
   }
 
   async function save(e: FormEvent) {

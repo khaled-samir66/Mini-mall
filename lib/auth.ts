@@ -64,3 +64,14 @@ export function clearSessionCookie() {
     path: "/",
   }
 }
+export function sessionCookie(value: string) {
+  return {
+    name: COOKIE,
+    value,
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: true,
+    path: "/",
+    maxAge: TTL,
+  }
+}

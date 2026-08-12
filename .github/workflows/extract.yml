@@ -14,7 +14,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
+
+      - name: Update from main
+        run: |
+          git pull --rebase origin main
 
       - name: Extract project files
         run: |
@@ -27,10 +32,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git pull --rebase origin main
-
           git add -A
           git commit -m "Extract project files" || echo "No changes to commit"
-
-          git push
+          git push origin main

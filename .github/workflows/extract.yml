@@ -17,7 +17,7 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Sync with main
+      - name: Sync with remote
         run: |
           git fetch origin main
           git reset --hard origin/main
